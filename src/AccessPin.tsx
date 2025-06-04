@@ -5,6 +5,7 @@ import { api } from "../convex/_generated/api";
 import { Doc } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { CopyBlock, monokai } from "react-code-blocks";
+import { Check, ClipboardList } from "lucide-react";
 
 // Adjusted type to match the action's return type, allowing imageUrls to be array of strings or nulls
 type PinDoc = Doc<"pins">;
@@ -16,6 +17,7 @@ export function AccessPin() {
     useState<RetrievedPinType>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const fetchPinAction = useAction(api.pins.fetchPinByCode);
 
@@ -45,6 +47,27 @@ export function AccessPin() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCopyText = (text: string) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        toast.success("Text copied to clipboard!");
+        setIsCopied(true);
+      },
+      () => toast.error("Failed to copy text.")
+    );
+  };
+
+  const handleDownloadImage = (imageUrl: string, index: number) => {
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = `pin-image-${index + 1}.jpg`;
+    document.body.appendChild(link);
+    link.target = "_blank";
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Image ${index + 1} download started!`);
   };
 
   console.log(retrievedContent?.content);
@@ -101,9 +124,23 @@ export function AccessPin() {
 
           {/* Text Content */}
           {retrievedContent.type === "text" && (
-            <p className="text-gray-700 whitespace-pre-wrap break-words bg-white p-3 rounded shadow">
-              {retrievedContent.content}
-            </p>
+            <div className="relative bg-white p-4">
+              <p className="text-gray-700 whitespace-pre-wrap break-words  rounded ">
+                {retrievedContent.content}
+              </p>
+              <button
+                onClick={() =>
+                  handleCopyText(retrievedContent?.textContent as string)
+                }
+                className="absolute top-[5%] right-2 px-1 py-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors mb-4"
+              >
+                {isCopied ? (
+                  <Check className="text-white size-4 shrink-0" />
+                ) : (
+                  <ClipboardList className="text-white size-4 shrink-0" />
+                )}
+              </button>
+            </div>
           )}
 
           {retrievedContent.type === "code" && (
@@ -123,12 +160,18 @@ export function AccessPin() {
               <div className="space-y-4">
                 {retrievedContent.imageUrls.map((imageUrl, index) =>
                   imageUrl ? (
-                    <div key={index} className="flex justify-center">
+                    <div key={index} className="flex flex-col items-center">
                       <img
                         src={imageUrl}
                         alt={`PIN Content ${index + 1}`}
                         className="max-w-full h-auto max-h-96 rounded-md shadow-lg"
                       />
+                      <button
+                        onClick={() => handleDownloadImage(imageUrl, index)}
+                        className="mt-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+                      >
+                        Download Image {index + 1}
+                      </button>
                     </div>
                   ) : (
                     <p key={index} className="text-gray-500">
@@ -144,13 +187,22 @@ export function AccessPin() {
             <div className="space-y-4">
               {/* Text part */}
               {retrievedContent.textContent && (
-                <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-2">
-                    Text:
-                  </h4>
-                  <p className="text-gray-700 whitespace-pre-wrap break-words bg-white p-3 rounded shadow">
+                <div className="relative bg-white p-4">
+                  <p className="text-gray-700 whitespace-pre-wrap break-words rounded ">
                     {retrievedContent.textContent}
                   </p>
+                  <button
+                    onClick={() =>
+                      handleCopyText(retrievedContent?.textContent as string)
+                    }
+                    className="absolute top-[6%] right-2 px-1 py-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors mb-4"
+                  >
+                    {isCopied ? (
+                      <Check className="text-white size-4 shrink-0" />
+                    ) : (
+                      <ClipboardList className="text-white size-4 shrink-0" />
+                    )}
+                  </button>
                 </div>
               )}
 
@@ -161,18 +213,50 @@ export function AccessPin() {
                     <h4 className="text-md font-medium text-gray-800 mb-2">
                       Images ({retrievedContent.imageUrls.length}):
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div
+                      className="columns-1 sm:columns-2 md:columns-3 gap-2"
+                      style={{ columnFill: "balance" }}
+                    >
                       {retrievedContent.imageUrls.map((imageUrl, index) =>
                         imageUrl ? (
-                          <div key={index} className="flex justify-center">
-                            <img
-                              src={imageUrl}
-                              alt={`PIN Image ${index + 1}`}
-                              className="max-w-full h-auto max-h-64 rounded-md shadow-lg"
-                            />
+                          <div
+                            key={index}
+                            className="break-inside-avoid mb-4 border border-primary shadow rounded-md"
+                          >
+                            <figure className="relative">
+                              <img
+                                src={imageUrl}
+                                alt={`PIN Image ${index + 1}`}
+                                className="w-full h-auto rounded-md shadow-lg"
+                              />
+                              <button
+                                onClick={() =>
+                                  handleDownloadImage(imageUrl, index)
+                                }
+                                className="absolute top-2 right-2 p-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                  />
+                                </svg>
+                              </button>
+                            </figure>
                           </div>
                         ) : (
-                          <p key={index} className="text-gray-500 text-center">
+                          <p
+                            key={index}
+                            className="text-gray-500 text-center mb-4"
+                          >
                             Image {index + 1} processing or not found.
                           </p>
                         )
