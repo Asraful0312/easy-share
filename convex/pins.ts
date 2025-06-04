@@ -119,3 +119,36 @@ export const fetchPinByCode = action({
     });
   },
 });
+
+export const getUserPins = query({
+  args: {},
+  handler: async (ctx: QueryCtx): Promise<PinWithImageUrls[]> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return []; // Return empty array if user is not authenticated
+    }
+
+    const pins = await ctx.db
+      .query("pins")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    // Map over pins to add imageUrls for image and mixed types
+    const pinsWithImageUrls = await Promise.all(
+      pins.map(async (pin) => {
+        if (pin.type === "image" || pin.type === "mixed") {
+          const imageIds = pin.imageIds || [];
+          const imageUrls = await Promise.all(
+            imageIds.map(async (imageId) => {
+              return await ctx.storage.getUrl(imageId);
+            })
+          );
+          return { ...pin, imageUrls };
+        }
+        return pin;
+      })
+    );
+
+    return pinsWithImageUrls;
+  },
+});

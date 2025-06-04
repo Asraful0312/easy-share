@@ -5,6 +5,7 @@ import { SignOutButton } from "./SignOutButton";
 import { Toaster } from "sonner";
 import { CreatePin } from "./CreatePin";
 import { AccessPin } from "./AccessPin";
+import UserPins from "./UserPins";
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ function Content() {
       </div>
       <CreatePin />
       <AccessPin />
+      <UserPins />
     </div>
   );
 }
