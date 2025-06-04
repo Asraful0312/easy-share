@@ -31,6 +31,7 @@ const UserPins = () => {
     link.href = imageUrl;
     link.download = `pin-image-${index + 1}.jpg`;
     document.body.appendChild(link);
+    link.target = "_blank";
     link.click();
     document.body.removeChild(link);
     window.open(imageUrl, "_blank");
@@ -171,19 +172,37 @@ const UserPins = () => {
                                         key={index}
                                         className="flex flex-col items-center"
                                       >
-                                        <img
-                                          src={imageUrl}
-                                          alt={`PIN Content ${index + 1}`}
-                                          className="max-w-full h-auto max-h-96 rounded-md shadow-lg"
-                                        />
-                                        <button
-                                          onClick={() =>
-                                            handleDownloadImage(imageUrl, index)
-                                          }
-                                          className="mt-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-                                        >
-                                          Download Image {index + 1}
-                                        </button>
+                                        <figure className="relative ">
+                                          <img
+                                            src={imageUrl}
+                                            alt={`PIN Image ${index + 1}`}
+                                            className="w-full h-auto rounded-md shadow-lg"
+                                          />
+                                          <button
+                                            onClick={() =>
+                                              handleDownloadImage(
+                                                imageUrl,
+                                                index
+                                              )
+                                            }
+                                            className="absolute top-2 right-2 p-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+                                          >
+                                            <svg
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              className="h-4 w-4"
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                              stroke="currentColor"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                              />
+                                            </svg>
+                                          </button>
+                                        </figure>
                                       </div>
                                     ) : (
                                       <p key={index} className="text-gray-500">

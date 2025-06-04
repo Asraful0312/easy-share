@@ -5,7 +5,7 @@ import { api } from "../convex/_generated/api";
 import { Doc } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { CopyBlock, monokai } from "react-code-blocks";
-import { Check, ClipboardList } from "lucide-react";
+import { Check, ClipboardList, X } from "lucide-react";
 
 // Adjusted type to match the action's return type, allowing imageUrls to be array of strings or nulls
 type PinDoc = Doc<"pins">;
@@ -77,7 +77,7 @@ export function AccessPin() {
         Access Your Pin
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
+        <div className="relative">
           <label
             htmlFor="pinCode"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -96,6 +96,15 @@ export function AccessPin() {
             placeholder="●●●●●●"
             disabled={isLoading}
           />
+          {pinCode && (
+            <button
+              type="button"
+              onClick={() => setPinCode("")}
+              className="absolute right-2 top-[47%]"
+            >
+              <X className="size-6 text-red-500" />
+            </button>
+          )}
         </div>
         <button
           type="submit"
@@ -157,21 +166,40 @@ export function AccessPin() {
           {retrievedContent.type === "image" &&
             retrievedContent.imageUrls &&
             retrievedContent.imageUrls.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-4 columns-1 sm:columns-2 md:columns-3 gap-2">
                 {retrievedContent.imageUrls.map((imageUrl, index) =>
                   imageUrl ? (
-                    <div key={index} className="flex flex-col items-center">
-                      <img
-                        src={imageUrl}
-                        alt={`PIN Content ${index + 1}`}
-                        className="max-w-full h-auto max-h-96 rounded-md shadow-lg"
-                      />
-                      <button
-                        onClick={() => handleDownloadImage(imageUrl, index)}
-                        className="mt-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-                      >
-                        Download Image {index + 1}
-                      </button>
+                    <div
+                      key={index}
+                      className="break-inside-avoid mb-4 border border-primary shadow rounded-md"
+                      style={{ columnFill: "balance" }}
+                    >
+                      <figure className="relative ">
+                        <img
+                          src={imageUrl}
+                          alt={`PIN Image ${index + 1}`}
+                          className="w-full h-auto rounded-md shadow-lg"
+                        />
+                        <button
+                          onClick={() => handleDownloadImage(imageUrl, index)}
+                          className="absolute top-2 right-2 p-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
+                          </svg>
+                        </button>
+                      </figure>
                     </div>
                   ) : (
                     <p key={index} className="text-gray-500">
