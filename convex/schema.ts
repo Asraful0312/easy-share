@@ -9,7 +9,8 @@ const applicationTables = {
       v.literal("text"),
       v.literal("image"),
       v.literal("mixed"),
-      v.literal("code")
+      v.literal("code"),
+      v.literal("url")
     ),
     content: v.string(), // For text type, this is the text. For image type, this is storageId. For mixed, this is JSON string.
     textContent: v.optional(v.string()), // For mixed type, store text separately

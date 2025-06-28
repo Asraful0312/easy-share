@@ -5,10 +5,11 @@ import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { langs } from "./lib/utils";
+import { Check, ClipboardList } from "lucide-react";
 
 export function CreatePin() {
   const [contentType, setContentType] = useState<
-    "text" | "image" | "mixed" | "code"
+    "text" | "image" | "mixed" | "code" | "url"
   >("text");
   const [textContent, setTextContent] = useState("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -16,6 +17,7 @@ export function CreatePin() {
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [language, setLanguage] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
 
   const generateUploadUrl = useMutation(api.pins.generateUploadUrl);
   const createPinMutation = useMutation(api.pins.createPin);
@@ -63,83 +65,105 @@ export function CreatePin() {
     return await Promise.all(uploadPromises);
   };
 
+  const handleCopyText = (text: string, offToast?: boolean) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        () => {
+          if (!offToast) {
+            toast.success(`Copied PIN ${text} to clipboard!`);
+            setIsCopied(true);
+          }
+        },
+        () => {
+          toast.error("Failed to copy PIN to clipboard. Please copy manually.");
+        }
+      );
+    } else {
+      toast.warning(
+        "Clipboard API not available. Please copy the PIN manually."
+      );
+    }
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
     setGeneratedPin(null);
+    setIsCopied(false);
 
     try {
+      let result;
       if (contentType === "text") {
         if (!textContent.trim()) {
           toast.error("Text content cannot be empty.");
           setIsLoading(false);
           return;
         }
-        const result = await createPinMutation({
+        result = await createPinMutation({
           type: "text",
           content: textContent,
         });
-        setGeneratedPin(result.pinCode);
-        toast.success(`PIN created: ${result.pinCode}`);
-        setTextContent("");
+      } else if (contentType === "url") {
+        if (!textContent.trim()) {
+          toast.error("Text content cannot be empty.");
+          setIsLoading(false);
+          return;
+        }
+        result = await createPinMutation({
+          type: "url",
+          content: textContent,
+        });
       } else if (contentType === "image") {
         if (selectedImages.length === 0) {
           toast.error("Please select at least one image.");
           setIsLoading(false);
           return;
         }
-
         const imageIds = await uploadImages(selectedImages);
-
-        const result = await createPinMutation({
+        result = await createPinMutation({
           type: "image",
           imageIds: imageIds,
         });
-        setGeneratedPin(result.pinCode);
-        toast.success(`PIN created: ${result.pinCode}`);
-        setSelectedImages([]);
-        if (imageInputRef.current) {
-          imageInputRef.current.value = "";
-        }
       } else if (contentType === "mixed") {
         if (!textContent.trim() && selectedImages.length === 0) {
           toast.error("Please provide either text content or images.");
           setIsLoading(false);
           return;
         }
-
         let imageIds: Id<"_storage">[] = [];
         if (selectedImages.length > 0) {
           imageIds = await uploadImages(selectedImages);
         }
-
-        const result = await createPinMutation({
+        result = await createPinMutation({
           type: "mixed",
           content: textContent,
           imageIds: imageIds,
         });
-        setGeneratedPin(result.pinCode);
-        toast.success(`PIN created: ${result.pinCode}`);
-        setTextContent("");
-        setSelectedImages([]);
-        if (imageInputRef.current) {
-          imageInputRef.current.value = "";
-        }
       } else if (contentType === "code") {
         if (!textContent.trim() && !language) {
           toast.error("Please provide a code language.");
           setIsLoading(false);
           return;
         }
-
-        const result = await createPinMutation({
+        result = await createPinMutation({
           type: "code",
           content: textContent,
           language,
         });
+      }
+
+      if (result) {
         setGeneratedPin(result.pinCode);
         toast.success(`PIN created: ${result.pinCode}`);
+        // Copy PIN to clipboard immediately after generation
+        handleCopyText(result.pinCode);
+        // Reset form fields
         setTextContent("");
+        setSelectedImages([]);
+        setLanguage("");
+        if (imageInputRef.current) {
+          imageInputRef.current.value = "";
+        }
       }
     } catch (error) {
       console.error("Error creating pin:", error);
@@ -163,7 +187,7 @@ export function CreatePin() {
             value={contentType}
             onChange={(e) =>
               setContentType(
-                e.target.value as "text" | "image" | "mixed" | "code"
+                e.target.value as "text" | "image" | "mixed" | "code" | "url"
               )
             }
             className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow shadow-sm hover:shadow-md"
@@ -173,6 +197,7 @@ export function CreatePin() {
             <option value="image">Images Only</option>
             <option value="mixed">Text + Images</option>
             <option value="code">Code</option>
+            <option value="url">Url</option>
           </select>
           {contentType === "code" && (
             <select
@@ -192,13 +217,18 @@ export function CreatePin() {
 
         {(contentType === "text" ||
           contentType === "mixed" ||
-          contentType === "code") && (
+          contentType === "code" ||
+          contentType === "url") && (
           <div>
             <label
               htmlFor="textContent"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Text Content
+              {contentType === "code"
+                ? "Code"
+                : contentType === "url"
+                  ? "URL"
+                  : "Text Content"}
             </label>
             <textarea
               id="textContent"
@@ -286,7 +316,8 @@ export function CreatePin() {
             (contentType === "image" && selectedImages.length === 0) ||
             (contentType === "mixed" &&
               !textContent.trim() &&
-              selectedImages.length === 0)
+              selectedImages.length === 0) ||
+            (contentType === "code" && !textContent.trim() && !language)
           }
         >
           {isLoading ? (
@@ -298,7 +329,7 @@ export function CreatePin() {
       </form>
 
       {generatedPin && (
-        <div className="mt-8 p-4 bg-green-50 border border-green-300 rounded-md text-center">
+        <div className="mt-8 p-4 bg-green-50 border border-green-300 rounded-md text-center relative">
           <p className="text-sm text-green-700">Your PIN is:</p>
           <p className="text-3xl font-bold text-green-800 tracking-wider">
             {generatedPin}
@@ -306,6 +337,16 @@ export function CreatePin() {
           <p className="text-xs text-gray-500 mt-2">
             Use this PIN to access your content from another device.
           </p>
+          <button
+            onClick={() => handleCopyText(generatedPin)}
+            className="absolute right-2 top-2 px-1 py-1 bg-green-500/70 text-white rounded-md mb-4"
+          >
+            {isCopied ? (
+              <Check className="text-white size-4 shrink-0" />
+            ) : (
+              <ClipboardList className="text-white size-4 shrink-0" />
+            )}
+          </button>
         </div>
       )}
     </div>

@@ -28,7 +28,8 @@ export const createPin = mutation({
       v.literal("text"),
       v.literal("image"),
       v.literal("mixed"),
-      v.literal("code")
+      v.literal("code"),
+      v.literal("url")
     ),
     content: v.optional(v.string()), // Text content
     imageIds: v.optional(v.array(v.id("_storage"))), // Array of storage IDs for images
@@ -63,6 +64,8 @@ export const createPin = mutation({
 
     if (args.type === "text") {
       pinData.content = args.content || "";
+    } else if (args.type === "url") {
+      pinData.content = args.content;
     } else if (args.type === "image") {
       // For single image, store the first imageId in content for backward compatibility
       pinData.content = args.imageIds?.[0] || "";
@@ -150,5 +153,26 @@ export const getUserPins = query({
     );
 
     return pinsWithImageUrls;
+  },
+});
+
+export const deletePin = mutation({
+  args: {
+    pinId: v.id("pins"),
+    imageIds: v.optional(v.array(v.id("_storage"))),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    if (args.imageIds) {
+      for (const imageId of args.imageIds) {
+        await ctx.storage.delete(imageId);
+      }
+    }
+
+    await ctx.db.delete(args.pinId);
   },
 });

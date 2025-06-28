@@ -11,7 +11,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 text-gray-800">
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md h-16 flex justify-between items-center border-b border-gray-200 shadow-sm px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-primary">PinDrop</h2>
+        <h2 className="text-2xl font-bold text-primary">EasyShare</h2>
         <SignOutButton />
       </header>
       <main className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 space-y-8">

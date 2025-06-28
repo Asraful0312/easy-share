@@ -1,14 +1,16 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Doc } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { CopyBlock, monokai } from "react-code-blocks";
-import { Check, ClipboardList, X } from "lucide-react";
+import { Check, ClipboardList, LinkIcon, X } from "lucide-react";
+
+import FullscreenImage from "./FullScreenImage";
 
 // Adjusted type to match the action's return type, allowing imageUrls to be array of strings or nulls
-type PinDoc = Doc<"pins">;
+export type PinDoc = Doc<"pins">;
 type RetrievedPinType = (PinDoc & { imageUrls?: (string | null)[] }) | null;
 
 export function AccessPin() {
@@ -18,8 +20,44 @@ export function AccessPin() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [urlArray, setUrlArray] = useState<string[]>([]);
 
   const fetchPinAction = useAction(api.pins.fetchPinByCode);
+
+  useEffect(() => {
+    if (
+      retrievedContent &&
+      retrievedContent.type === "url" &&
+      retrievedContent.content
+    ) {
+      // Regular expression to match URLs
+      const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*/g;
+      const urls = retrievedContent.content.match(urlRegex) || [];
+      console.log("urls", urls);
+      setUrlArray(urls);
+    } else {
+      setUrlArray([]);
+    }
+  }, [retrievedContent]);
+
+  // Handle clipboard paste on input focus
+  const handleInputFocus = async () => {
+    try {
+      // Check if clipboard API is available and has permission
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const clipboardText = await navigator.clipboard.readText();
+        // Validate clipboard content: must be 6 digits
+        if (/^\d{6}$/.test(clipboardText)) {
+          setPinCode(clipboardText);
+          toast.success("PIN pasted from clipboard!");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to read clipboard:", err);
+      // Optionally, you can show a toast message for clipboard access errors
+      // toast.error("Failed to access clipboard.");
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -70,7 +108,8 @@ export function AccessPin() {
     toast.success(`Image ${index + 1} download started!`);
   };
 
-  console.log(retrievedContent?.content);
+  console.log(retrievedContent);
+
   return (
     <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-auto mt-10">
       <h2 className="text-2xl font-bold text-primary mb-6 text-center">
@@ -91,6 +130,7 @@ export function AccessPin() {
             onChange={(e) =>
               setPinCode(e.target.value.replace(/\D/g, "").slice(0, 6))
             }
+            onFocus={handleInputFocus} // Add onFocus handler
             maxLength={6}
             className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow shadow-sm hover:shadow-md text-center tracking-[0.3em]"
             placeholder="●●●●●●"
@@ -152,6 +192,60 @@ export function AccessPin() {
             </div>
           )}
 
+          {/* url */}
+          {/* URL Content */}
+          {retrievedContent.type === "url" && (
+            <div className="relative bg-white p-4">
+              <p className="text-gray-700 whitespace-pre-wrap break-words rounded">
+                {retrievedContent.content}
+              </p>
+              <button
+                onClick={() => handleCopyText(retrievedContent.content)}
+                className="absolute top-[5%] right-2 px-1 py-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors mb-4"
+              >
+                {isCopied ? (
+                  <Check className="text-white size-4 shrink-0" />
+                ) : (
+                  <ClipboardList className="text-white size-4 shrink-0" />
+                )}
+              </button>
+              {urlArray.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-md font-medium text-gray-800 mb-2">
+                    URL Previews ({urlArray.length}):
+                  </h4>
+                  <div className="space-y-2">
+                    {urlArray.map((url, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <LinkIcon className="size-4 text-primary" />
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline break-all"
+                        >
+                          {url}
+                        </a>
+                      </div>
+                    ))}
+
+                    {urlArray.map((url, index) => (
+                      <div key={index} className="mt-2">
+                        <iframe
+                          src={url}
+                          title={`Preview ${index + 1}`}
+                          className="w-full h-64 border border-gray-300 rounded-md"
+                          sandbox="allow-scripts allow-same-origin"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {retrievedContent.type === "code" && (
             <CopyBlock
               language={retrievedContent.language as string}
@@ -169,38 +263,12 @@ export function AccessPin() {
               <div className="space-y-4 columns-1 sm:columns-2 md:columns-3 gap-2">
                 {retrievedContent.imageUrls.map((imageUrl, index) =>
                   imageUrl ? (
-                    <div
+                    <FullscreenImage
                       key={index}
-                      className="break-inside-avoid mb-4 border border-primary shadow rounded-md"
-                      style={{ columnFill: "balance" }}
-                    >
-                      <figure className="relative ">
-                        <img
-                          src={imageUrl}
-                          alt={`PIN Image ${index + 1}`}
-                          className="w-full h-auto rounded-md shadow-lg"
-                        />
-                        <button
-                          onClick={() => handleDownloadImage(imageUrl, index)}
-                          className="absolute top-2 right-2 p-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                            />
-                          </svg>
-                        </button>
-                      </figure>
-                    </div>
+                      src={imageUrl}
+                      index={index}
+                      onDownload={handleDownloadImage}
+                    />
                   ) : (
                     <p key={index} className="text-gray-500">
                       Image {index + 1} processing or not found.
@@ -247,39 +315,12 @@ export function AccessPin() {
                     >
                       {retrievedContent.imageUrls.map((imageUrl, index) =>
                         imageUrl ? (
-                          <div
+                          <FullscreenImage
                             key={index}
-                            className="break-inside-avoid mb-4 border border-primary shadow rounded-md"
-                          >
-                            <figure className="relative">
-                              <img
-                                src={imageUrl}
-                                alt={`PIN Image ${index + 1}`}
-                                className="w-full h-auto rounded-md shadow-lg"
-                              />
-                              <button
-                                onClick={() =>
-                                  handleDownloadImage(imageUrl, index)
-                                }
-                                className="absolute top-2 right-2 p-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                  />
-                                </svg>
-                              </button>
-                            </figure>
-                          </div>
+                            src={imageUrl}
+                            index={index}
+                            onDownload={handleDownloadImage}
+                          />
                         ) : (
                           <p
                             key={index}
