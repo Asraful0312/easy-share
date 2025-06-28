@@ -33,7 +33,6 @@ export function AccessPin() {
       // Regular expression to match URLs
       const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*/g;
       const urls = retrievedContent.content.match(urlRegex) || [];
-      console.log("urls", urls);
       setUrlArray(urls);
     } else {
       setUrlArray([]);
@@ -178,9 +177,7 @@ export function AccessPin() {
                 {retrievedContent.content}
               </p>
               <button
-                onClick={() =>
-                  handleCopyText(retrievedContent?.textContent as string)
-                }
+                onClick={() => handleCopyText(retrievedContent?.content)}
                 className="absolute top-[5%] right-2 px-1 py-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors mb-4"
               >
                 {isCopied ? (
@@ -192,7 +189,6 @@ export function AccessPin() {
             </div>
           )}
 
-          {/* url */}
           {/* URL Content */}
           {retrievedContent.type === "url" && (
             <div className="relative bg-white p-4">

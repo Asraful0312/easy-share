@@ -65,14 +65,12 @@ export function CreatePin() {
     return await Promise.all(uploadPromises);
   };
 
-  const handleCopyText = (text: string, offToast?: boolean) => {
+  const handleCopyText = (text: string) => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(
         () => {
-          if (!offToast) {
-            toast.success(`Copied PIN ${text} to clipboard!`);
-            setIsCopied(true);
-          }
+          toast.success(`Copied PIN ${text} to clipboard!`);
+          setIsCopied(true);
         },
         () => {
           toast.error("Failed to copy PIN to clipboard. Please copy manually.");
@@ -173,6 +171,13 @@ export function CreatePin() {
     }
   };
 
+  const pasteCopiedText = async () => {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      const clipboardText = await navigator.clipboard.readText();
+      setTextContent(clipboardText);
+    }
+  };
+
   return (
     <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold text-primary mb-6 text-center">
@@ -220,16 +225,26 @@ export function CreatePin() {
           contentType === "code" ||
           contentType === "url") && (
           <div>
-            <label
-              htmlFor="textContent"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {contentType === "code"
-                ? "Code"
-                : contentType === "url"
-                  ? "URL"
-                  : "Text Content"}
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor="textContent"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                {contentType === "code"
+                  ? "Code"
+                  : contentType === "url"
+                    ? "URL"
+                    : "Text Content"}
+              </label>
+
+              <button
+                type="button"
+                onClick={pasteCopiedText}
+                className="font-semibold text-primary"
+              >
+                Click to paste
+              </button>
+            </div>
             <textarea
               id="textContent"
               value={textContent}
@@ -239,6 +254,16 @@ export function CreatePin() {
               placeholder="Enter your text here..."
               disabled={isLoading}
             />
+            {textContent && (
+              <div className="flex items-center justify-end">
+                <button
+                  onClick={() => setTextContent("")}
+                  className="py-2 px-3 rounded bg-red-500 text-white font-medium text-sm"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
           </div>
         )}
 

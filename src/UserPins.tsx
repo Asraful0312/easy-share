@@ -7,14 +7,14 @@ import { CopyBlock, monokai } from "react-code-blocks";
 
 import FullscreenImage from "./FullScreenImage";
 import {
+  CheckCheckIcon,
   Clipboard,
-  ClipboardList,
   Eye,
   EyeClosed,
   LinkIcon,
   Trash2,
 } from "lucide-react";
-import { handleCopyText } from "./lib/utils";
+
 import { Id } from "../convex/_generated/dataModel";
 
 const UserPins = () => {
@@ -24,6 +24,23 @@ const UserPins = () => {
   const [expandedPinId, setExpandedPinId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const deletePin = useMutation(api.pins.deletePin);
+  const [copiedText, setCopiedText] = useState("");
+
+  const handleCopyText = (text: string) => {
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Text copied successfully."),
+      () => toast.error("Failed to copy text.")
+    );
+    setCopiedText(text);
+  };
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setCopiedText("");
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [copiedText]);
 
   useEffect(() => {
     if (pins && pins?.length === 0 && !isLoading) {
@@ -146,8 +163,13 @@ const UserPins = () => {
                   return (
                     <Fragment key={pin?._id}>
                       <tr className="border-b border-gray-200 hover:bg-gray-50">
-                        <td className="px-4 py-3 text-gray-700">
-                          {pin?.pinCode}
+                        <td
+                          onClick={() => handleCopyText(pin?.pinCode as string)}
+                          className="px-4 py-3 text-gray-700 cursor-pointer font-semibold"
+                        >
+                          {copiedText === pin?.pinCode
+                            ? "Copied!"
+                            : pin?.pinCode}
                         </td>
                         <td className="px-4 py-3 text-gray-700 capitalize">
                           {pin?.type}
@@ -189,16 +211,17 @@ const UserPins = () => {
                               {pin?.type === "text" && (
                                 <div className="bg-white p-3 relative">
                                   <p className="text-gray-700 whitespace-pre-wrap break-words  flex-1">
-                                    {pin?.textContent}
-                                    iusto?
+                                    {pin?.content}
                                   </p>
                                   <button
-                                    onClick={() =>
-                                      handleCopyText(pin?.textContent as string)
-                                    }
+                                    onClick={() => handleCopyText(pin?.content)}
                                     className="absolute right-2 top-2  p-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
                                   >
-                                    <Clipboard className="size-4 shrink-0" />
+                                    {copiedText === pin.content ? (
+                                      <CheckCheckIcon className="size-4 shrink-0" />
+                                    ) : (
+                                      <Clipboard className="size-4 shrink-0" />
+                                    )}
                                   </button>
                                 </div>
                               )}
@@ -212,7 +235,11 @@ const UserPins = () => {
                                     onClick={() => handleCopyText(pin.content)}
                                     className="absolute top-[5%] right-2 px-1 py-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors mb-4"
                                   >
-                                    <ClipboardList className="text-white size-4 shrink-0" />
+                                    {copiedText === pin.content ? (
+                                      <CheckCheckIcon className="size-4 shrink-0" />
+                                    ) : (
+                                      <Clipboard className="size-4 shrink-0" />
+                                    )}
                                   </button>
                                   {urls.length > 0 && (
                                     <div className="mt-4">
@@ -301,15 +328,7 @@ const UserPins = () => {
                                       </h4>
                                       <div className="bg-white p-3 relative">
                                         <p className="text-gray-700 whitespace-pre-wrap break-words  flex-1">
-                                          {pin?.textContent} fsdf sdf sdf s dfjs
-                                          hdjfhs hjsfdj Lorem ipsum dolor sit
-                                          amet consectetur, adipisicing elit.
-                                          Magni molestiae eligendi distinctio,
-                                          nisi modi, laborum incidunt dicta
-                                          fugiat deserunt ut nostrum
-                                          voluptatibus dolore excepturi
-                                          molestias suscipit sequi obcaecati sit
-                                          iusto?
+                                          {pin?.textContent}
                                         </p>
                                         <button
                                           onClick={() =>
@@ -319,7 +338,11 @@ const UserPins = () => {
                                           }
                                           className="absolute right-2 top-2  p-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
                                         >
-                                          <Clipboard className="size-4 shrink-0" />
+                                          {copiedText === pin.textContent ? (
+                                            <CheckCheckIcon className="size-4 shrink-0" />
+                                          ) : (
+                                            <Clipboard className="size-4 shrink-0" />
+                                          )}
                                         </button>
                                       </div>
                                     </div>
