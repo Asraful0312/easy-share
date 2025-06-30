@@ -96,15 +96,27 @@ export function AccessPin() {
     );
   };
 
-  const handleDownloadImage = (imageUrl: string, index: number) => {
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.download = `pin-image-${index + 1}.jpg`;
-    document.body.appendChild(link);
-    link.target = "_blank";
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Image ${index + 1} download started!`);
+  const handleDownloadImage = async (imageUrl: string, index: number) => {
+    try {
+      const response = await fetch(imageUrl, { mode: "cors" }); // 'cors' ensures cross-origin fetching
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `pin-image-${index + 1}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(url);
+
+      toast.success(`Image ${index + 1} download started!`);
+    } catch (error) {
+      console.error("Failed to download image", error);
+      toast.error("Failed to download image");
+    }
   };
 
   console.log(retrievedContent);
