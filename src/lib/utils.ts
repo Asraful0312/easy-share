@@ -40,3 +40,22 @@ export const handleCopyText = (text: string) => {
     () => toast.error("Failed to copy text.")
   );
 };
+
+export const formatBytes = (bytes: number) => {
+  if (bytes === 0) return "0 MB";
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(2)} MB`;
+};
+
+// Format expiration date to readable string
+export const formatExpirationDate = (timestamp: number) => {
+  const date = new Date(timestamp);
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+};

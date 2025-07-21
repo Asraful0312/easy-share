@@ -5,9 +5,17 @@ import { api } from "../convex/_generated/api";
 import { Doc } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { CopyBlock, monokai } from "react-code-blocks";
-import { Check, ClipboardList, LinkIcon, X } from "lucide-react";
+import {
+  Check,
+  CheckCheckIcon,
+  Clipboard,
+  ClipboardList,
+  LinkIcon,
+  X,
+} from "lucide-react";
 
 import FullscreenImage from "./FullScreenImage";
+import PreviewContext from "./components/PreviewContext";
 
 // Adjusted type to match the action's return type, allowing imageUrls to be array of strings or nulls
 export type PinDoc = Doc<"pins">;
@@ -21,6 +29,7 @@ export function AccessPin() {
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [urlArray, setUrlArray] = useState<string[]>([]);
+  const [copiedText, setCopiedText] = useState("");
 
   const fetchPinAction = useAction(api.pins.fetchPinByCode);
 
@@ -91,6 +100,7 @@ export function AccessPin() {
       () => {
         toast.success("Text copied to clipboard!");
         setIsCopied(true);
+        setCopiedText(text);
       },
       () => toast.error("Failed to copy text.")
     );
@@ -116,6 +126,33 @@ export function AccessPin() {
     } catch (error) {
       console.error("Failed to download image", error);
       toast.error("Failed to download image");
+    }
+  };
+
+  const handleDownloadFile = async (
+    fileUrl: string,
+    fileType: string,
+    index: number
+  ) => {
+    try {
+      const response = await fetch(fileUrl, { mode: "cors" });
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      const extension = fileType?.split("/")[1]?.toLowerCase() || "file";
+      link.href = url;
+      link.download = `pin-file-${index + 1}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+
+      toast.success(`File download started!`);
+    } catch (error) {
+      console.error("Failed to download file", error);
+      toast.error("Failed to download file");
     }
   };
 
@@ -342,6 +379,43 @@ export function AccessPin() {
                   </div>
                 )}
             </div>
+          )}
+
+          {retrievedContent?.type === "file" && (
+            <>
+              <PreviewContext
+                url={retrievedContent.content}
+                contentType={retrievedContent.fileType as string}
+                handleDownloadImage={handleDownloadImage}
+              />
+              <div className="bg-white p-3 relative mt-4">
+                <p className="text-gray-700 truncate flex-1">
+                  {retrievedContent?.content.substring(0, 50)}...
+                </p>
+                <button
+                  onClick={() => handleCopyText(retrievedContent?.content)}
+                  className="absolute right-2 top-2 p-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+                >
+                  {copiedText === retrievedContent.content ? (
+                    <CheckCheckIcon className="size-4 shrink-0" />
+                  ) : (
+                    <Clipboard className="size-4 shrink-0" />
+                  )}
+                </button>
+              </div>
+              <button
+                onClick={() =>
+                  handleDownloadFile(
+                    retrievedContent?.content,
+                    retrievedContent?.fileType as string,
+                    1
+                  )
+                }
+                className="w-full px-4 py-2 mt-3 rounded-md bg-primary text-white font-semibold hover:bg-primary-hover transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                Download
+              </button>
+            </>
           )}
 
           {/* Fallback for image types with no URLs */}

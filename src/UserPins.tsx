@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { Id } from "../convex/_generated/dataModel";
+import { formatExpirationDate } from "./lib/utils";
+import PreviewContext from "./components/PreviewContext";
 
 const UserPins = () => {
   const pins = useQuery(api.pins.getUserPins);
@@ -111,17 +113,50 @@ const UserPins = () => {
 
   const handlePinDelete = async (
     pinId: Id<"pins">,
-    imageIds: Id<"_storage">[]
+    imageIds: Id<"_storage">[],
+    key: string | null
   ) => {
     if (confirm("Are you sure you want to delete this pin?")) {
       try {
         setIsDeleting(true);
-        await deletePin({ pinId, imageIds });
+        if (key) {
+          await deletePin({ pinId, imageIds, key: key });
+        } else {
+          await deletePin({ pinId, imageIds });
+        }
+
         setIsDeleting(false);
       } catch {
         setIsDeleting(false);
         toast.error("Failed to delete pin");
       }
+    }
+  };
+
+  const handleDownloadFile = async (
+    fileUrl: string,
+    fileType: string,
+    index: number
+  ) => {
+    try {
+      const response = await fetch(fileUrl, { mode: "cors" });
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      const extension = fileType?.split("/")[1]?.toLowerCase() || "file";
+      link.href = url;
+      link.download = `pin-file-${index + 1}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+
+      toast.success(`File download started!`);
+    } catch (error) {
+      console.error("Failed to download file", error);
+      toast.error("Failed to download file");
     }
   };
 
@@ -154,15 +189,19 @@ const UserPins = () => {
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
                   Type
                 </th>
+
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
                   Content Preview
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                  Expire Date
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="w-full">
               {pins &&
                 pins.length > 0 &&
                 pins?.map((pin) => {
@@ -181,10 +220,16 @@ const UserPins = () => {
                             : pin?.pinCode}
                         </td>
                         <td className="px-4 py-3 text-gray-700 capitalize">
-                          {pin?.type}
+                          {pin?.type === "file" ? pin?.fileType : pin?.type}
                         </td>
+
                         <td className="px-4 py-3 text-gray-700">
                           {getContentPreview(pin)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-700 cursor-pointer text-sm">
+                          {pin?.expirationDate
+                            ? formatExpirationDate(pin.expirationDate)
+                            : "N/A"}
                         </td>
                         <td className="px-4 py-3 flex items-center">
                           <button
@@ -199,12 +244,13 @@ const UserPins = () => {
                           </button>
 
                           <button
-                            onClick={() =>
-                              handlePinDelete(
+                            onClick={async () => {
+                              await handlePinDelete(
                                 pin?._id as Id<"pins">,
-                                pin?.imageIds as Id<"_storage">[]
-                              )
-                            }
+                                pin?.imageIds as Id<"_storage">[],
+                                pin?.fileKey ? pin.fileKey : null
+                              );
+                            }}
                             disabled={isDeleting}
                             className="ml-5 disabled:opacity-60 disabled:cursor-not-allowed"
                           >
@@ -213,13 +259,16 @@ const UserPins = () => {
                         </td>
                       </tr>
                       {expandedPinId === pin?._id && (
-                        <tr>
-                          <td colSpan={4} className="px-4 py-4 bg-gray-50">
-                            <div className="p-4 border border-gray-200 rounded-md">
+                        <tr className="w-full">
+                          <td
+                            colSpan={5}
+                            className="px-4 py-4 bg-gray-50 w-full"
+                          >
+                            <div className="rounded-md w-full">
                               {/* Text Content */}
                               {pin?.type === "text" && (
-                                <div className="bg-white p-3 relative">
-                                  <p className="text-gray-700 whitespace-pre-wrap break-words  flex-1">
+                                <div className="bg-white p-3 relative w-full">
+                                  <p className="text-gray-700 whitespace-pre-wrap break-words  flex-1 w-full">
                                     {pin?.content}
                                   </p>
                                   <button
@@ -392,6 +441,56 @@ const UserPins = () => {
                                       </div>
                                     )}
                                 </div>
+                              )}
+
+                              {/* File content */}
+                              {pin?.type === "file" && (
+                                <>
+                                  <PreviewContext
+                                    url={pin.content}
+                                    contentType={pin.fileType as string}
+                                    handleDownloadImage={handleDownloadImage}
+                                  />
+
+                                  <div
+                                    className="bg-white p-3 relative w-full mt-4
+                                  "
+                                  >
+                                    <p className="text-gray-700 truncate flex-1">
+                                      {pin?.content.substring(0, 50)}...
+                                    </p>
+                                    <button
+                                      onClick={() =>
+                                        handleCopyText(pin?.content)
+                                      }
+                                      className="absolute right-2 top-2 p-1 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+                                    >
+                                      {copiedText === pin.content ? (
+                                        <CheckCheckIcon className="size-4 shrink-0" />
+                                      ) : (
+                                        <Clipboard className="size-4 shrink-0" />
+                                      )}
+                                    </button>
+                                  </div>
+
+                                  <button
+                                    onClick={() =>
+                                      handleDownloadFile(
+                                        pin?.content,
+                                        pin?.fileType as string,
+                                        pins?.indexOf(pin)
+                                      )
+                                    }
+                                    className="w-full px-4 py-2 mt-3 rounded-md bg-primary text-white font-semibold hover:bg-primary-hover transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                  >
+                                    Download
+                                  </button>
+                                  <p className="text-xs text-red-600 font-bold">
+                                    Note: If the download button does not work
+                                    copy the file link and open it to a new
+                                    browser tab.
+                                  </p>
+                                </>
                               )}
 
                               {(pin?.type === "image" ||
