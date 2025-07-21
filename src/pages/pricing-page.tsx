@@ -25,8 +25,6 @@ const PricingPage = () => {
     );
   }
 
-  console.log("products", products);
-
   const plans = [
     {
       title: "Free",
@@ -82,11 +80,6 @@ const PricingPage = () => {
     if (targetAmount < currentAmount) return "Downgrade";
     return "Switch";
   };
-
-  console.log("plans", plans);
-
-  console.log("user", user);
-  console.log("userData", userData);
 
   const handlePlanChange = async (productId: string | null) => {
     if (!user || !userData) {
@@ -234,7 +227,7 @@ const PricingPage = () => {
                           productIds={[plan.productId].filter(
                             (id): id is string => id !== undefined
                           )}
-                          className="text-sm text-black"
+                          className="text-sm text-black w-full block py-3"
                           embed={false}
                         >
                           {getButtonText(plan.productId)}

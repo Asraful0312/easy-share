@@ -32,7 +32,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         <button
           onClick={onClick}
           disabled={disabled}
-          className={`w-full py-2 rounded  ${
+          className={`w-full py-3 rounded  ${
             disabled
               ? "bg-gray-400 cursor-not-allowed"
               : highlighted
@@ -43,7 +43,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           {cta}
         </button>
       ) : (
-        <div className="w-full py-2 bg-blue-500 rounded text-black">{cta}</div>
+        <div className="w-full bg-blue-500 rounded text-black">{cta}</div>
       )}
       <ul className="mt-4 space-y-2">
         {features.map((feature) => (

@@ -156,8 +156,6 @@ export function AccessPin() {
     }
   };
 
-  console.log(retrievedContent);
-
   return (
     <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-auto mt-10">
       <h2 className="text-2xl font-bold text-primary mb-6 text-center">
