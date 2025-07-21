@@ -45,7 +45,7 @@ const PricingPage = () => {
       title: "Pro Tier",
       price: "$5/mo",
       cta: userData?.isPro ? "Current Plan" : "Upgrade to Pro",
-      productId: products?.proTier?.id,
+      productId: "b095ce70-5d7b-40eb-97a0-13edd9570054",
       features: [
         "Upload any file type",
         "Store for up to 7 days",
@@ -59,7 +59,7 @@ const PricingPage = () => {
       title: "Team/Business Tier",
       price: "$20/mo",
       cta: userData?.isBusiness ? "Current Plan" : "Upgrade to Team/Business",
-      productId: products?.businessTier?.id,
+      productId: "6c6c84c5-b479-4884-8609-f10047f13102",
       features: [
         "Bulk upload",
         "Store up to 30 days",

@@ -27,12 +27,8 @@ export const polar = new Polar(components.polar, {
   // whatever you want), and replace the values with the actual product IDs from your
   // Polar dashboard
   products: {
-    proTier:
-      process.env.POLAR_PRO_TIER__PRODUCT_ID ||
-      "b095ce70-5d7b-40eb-97a0-13edd9570054",
-    businessTier:
-      process.env.POLAR_BUSSINESS_TIER_PRODUCT_ID ||
-      "6c6c84c5-b479-4884-8609-f10047f13102",
+    proTier: "b095ce70-5d7b-40eb-97a0-13edd9570054",
+    businessTier: "6c6c84c5-b479-4884-8609-f10047f13102",
   },
   server: "production", // Optional: "sandbox" or "production", defaults to POLAR_SERVER env var
 });
