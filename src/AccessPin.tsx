@@ -16,6 +16,7 @@ import {
 
 import FullscreenImage from "./FullScreenImage";
 import PreviewContext from "./components/PreviewContext";
+import { handleDownloadFile } from "./lib/utils";
 
 // Adjusted type to match the action's return type, allowing imageUrls to be array of strings or nulls
 export type PinDoc = Doc<"pins">;
@@ -126,33 +127,6 @@ export function AccessPin() {
     } catch (error) {
       console.error("Failed to download image", error);
       toast.error("Failed to download image");
-    }
-  };
-
-  const handleDownloadFile = async (
-    fileUrl: string,
-    fileType: string,
-    index: number
-  ) => {
-    try {
-      const response = await fetch(fileUrl, { mode: "cors" });
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      const extension = fileType?.split("/")[1]?.toLowerCase() || "file";
-      link.href = url;
-      link.download = `pin-file-${index + 1}.${extension}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-
-      toast.success(`File download started!`);
-    } catch (error) {
-      console.error("Failed to download file", error);
-      toast.error("Failed to download file");
     }
   };
 
