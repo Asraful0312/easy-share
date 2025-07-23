@@ -6,6 +6,7 @@ import AboutUs from "./pages/about";
 import TermsAndConditions from "./pages/terms";
 import PrivacyPolicy from "./pages/privacy";
 import Footer from "./components/footer";
+import SigninPage from "./pages/signin-page";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/signin" element={<SigninPage />} />
       </Routes>
       <Footer />
     </>

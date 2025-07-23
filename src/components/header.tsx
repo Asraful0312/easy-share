@@ -1,4 +1,5 @@
 import { SignOutButton } from "@/SignOutButton";
+import { Authenticated, Unauthenticated } from "convex/react";
 
 import { Link } from "react-router-dom";
 
@@ -19,7 +20,17 @@ const Header = () => {
           </Link>
         </li>
         <li>
-          <SignOutButton />
+          <Authenticated>
+            <SignOutButton />
+          </Authenticated>
+          <Unauthenticated>
+            <Link
+              className="px-4 py-2 rounded bg-white text-secondary border border-gray-200 font-semibold hover:bg-gray-50 hover:text-secondary-hover transition-colors shadow-sm hover:shadow"
+              to="/signin"
+            >
+              Signin
+            </Link>
+          </Unauthenticated>
         </li>
       </ul>
     </header>

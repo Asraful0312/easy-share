@@ -1,14 +1,8 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import { PricingCard } from "@/components/pricing/PricingCard";
-import {
-  Authenticated,
-  Unauthenticated,
-  useAction,
-  useQuery,
-} from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { CheckoutLink, CustomerPortalLink } from "@convex-dev/polar/react";
-import { SignInForm } from "@/SignInForm";
 
 const PricingPage = () => {
   const user = useQuery(api.auth.loggedInUser);
@@ -86,6 +80,9 @@ const PricingPage = () => {
       alert("Please log in to change your subscription.");
       return;
     }
+    if (user.isAnonymous) {
+      alert("Please login using email or google");
+    }
 
     if (!productId) {
       // Handle downgrade to free (cancellation)
@@ -126,6 +123,10 @@ const PricingPage = () => {
       alert("No active subscription to cancel.");
       return;
     }
+    if (user.isAnonymous) {
+      alert("Please login using email or google");
+    }
+
     if (
       window.confirm(
         "Are you sure you want to cancel your subscription? This will immediately end your subscription and downgrade you to the Free plan."
@@ -142,109 +143,101 @@ const PricingPage = () => {
 
   return (
     <>
-      <Unauthenticated>
-        <div className="w-full max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl text-center">
-          <h1 className="text-4xl font-bold text-primary mb-4">
-            Welcome to PinDrop!
+      <div className="min-h-screen bg-gray-50 py-20 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-3xl font-bold mb-4">
+            Choose the plan that fits your needs. Upgrade anytime.
           </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Sign in to create and access your pins securely.
-          </p>
-          <SignInForm />
-        </div>
-      </Unauthenticated>
-      <Authenticated>
-        <div className="min-h-screen bg-gray-50 py-20 px-4">
-          <div className="max-w-6xl mx-auto text-center">
-            <h1 className="text-3xl font-bold mb-4">
-              Choose the plan that fits your needs. Upgrade anytime.
-            </h1>
 
-            {/* Current Plan Display */}
-            {userData && (
-              <div className="mb-8 p-6 bg-white rounded-lg shadow-lg">
-                <h2 className="text-2xl font-semibold mb-2">Current Plan</h2>
-                <div className="flex items-center justify-center gap-4">
-                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                    {userData.subscription?.product.name ||
-                      plans.find(
-                        (p) => p.productId === userData.subscription?.productId
-                      )?.title ||
-                      "Free"}
-                  </span>
-                  {userData.subscription?.amount && (
-                    <span className="text-sm text-gray-600">
-                      ${userData.subscription.amount / 100}/
-                      {userData.subscription.recurringInterval}
-                    </span>
-                  )}
+          {/* Current Plan Display */}
+          {userData && (
+            <div className="mb-8 p-6 bg-white rounded-lg shadow-lg">
+              <h2 className="text-2xl font-semibold mb-2">Current Plan</h2>
+              <div className="flex items-center justify-center gap-4">
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                  {userData.subscription?.product.name ||
+                    plans.find(
+                      (p) => p.productId === userData.subscription?.productId
+                    )?.title ||
+                    "Free"}
+                </span>
+                {userData.subscription?.amount && (
                   <span className="text-sm text-gray-600">
-                    •{" "}
-                    {userData.isBusiness
-                      ? "Up to 50GB/day, 5GB/file, 30 days storage"
-                      : userData.isPro
-                        ? "Up to 5GB/day, 1GB/file, 7 days storage"
-                        : "Up to 100MB/day, 50MB/file, 1 day storage"}
+                    ${userData.subscription.amount / 100}/
+                    {userData.subscription.recurringInterval}
                   </span>
-                </div>
-                {userData.subscription && (
-                  <div className="mt-4 flex justify-center gap-4">
-                    <CustomerPortalLink
-                      polarApi={{
-                        generateCustomerPortalUrl:
-                          api.polar.generateCustomerPortalUrl,
-                      }}
-                      className="text-sm text-indigo-600 hover:text-indigo-700"
-                    >
-                      Manage Subscription
-                    </CustomerPortalLink>
-                    <button
-                      className="text-sm text-red-600 hover:text-red-700"
-                      onClick={handleCancelSubscription}
-                    >
-                      Cancel Subscription
-                    </button>
-                  </div>
                 )}
+                <span className="text-sm text-gray-600">
+                  •{" "}
+                  {userData.isBusiness
+                    ? "Up to 50GB/day, 5GB/file, 30 days storage"
+                    : userData.isPro
+                      ? "Up to 5GB/day, 1GB/file, 7 days storage"
+                      : "Up to 100MB/day, 50MB/file, 1 day storage"}
+                </span>
               </div>
-            )}
+              {userData.subscription && (
+                <div className="mt-4 flex justify-center gap-4">
+                  <CustomerPortalLink
+                    polarApi={{
+                      generateCustomerPortalUrl:
+                        api.polar.generateCustomerPortalUrl,
+                    }}
+                    className="text-sm text-indigo-600 hover:text-indigo-700"
+                  >
+                    Manage Subscription
+                  </CustomerPortalLink>
+                  <button
+                    className="text-sm text-red-600 hover:text-red-700"
+                    onClick={handleCancelSubscription}
+                  >
+                    Cancel Subscription
+                  </button>
+                </div>
+              )}
 
-            {/* Pricing Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {plans.map((plan) => (
-                <PricingCard
-                  key={plan.title}
-                  {...plan}
-                  onClick={() => handlePlanChange(plan?.productId as string)}
-                  cta={
-                    plan.productId ? (
-                      userData?.isFree ? (
-                        <CheckoutLink
-                          polarApi={{
-                            generateCheckoutLink:
-                              api.polar.generateCheckoutLink,
-                          }}
-                          productIds={[plan.productId].filter(
-                            (id): id is string => id !== undefined
-                          )}
-                          className="text-sm text-black w-full block py-3"
-                          embed={false}
-                        >
-                          {getButtonText(plan.productId)}
-                        </CheckoutLink>
-                      ) : (
-                        getButtonText(plan.productId)
-                      )
-                    ) : (
-                      plan.cta
-                    )
-                  }
-                />
-              ))}
+              {user?.isAnonymous && (
+                <p className="text-center text-sm font-bold text-red-500 mt-2">
+                  Please signin using Email or Google to change Plan.
+                </p>
+              )}
             </div>
+          )}
+
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {plans.map((plan) => (
+              <PricingCard
+                key={plan.title}
+                {...plan}
+                onClick={() => handlePlanChange(plan?.productId as string)}
+                cta={
+                  plan.productId ? (
+                    userData?.isFree ? (
+                      <CheckoutLink
+                        polarApi={{
+                          generateCheckoutLink: api.polar.generateCheckoutLink,
+                        }}
+                        productIds={[plan.productId].filter(
+                          (id): id is string => id !== undefined
+                        )}
+                        className="text-sm text-black w-full block py-3"
+                        embed={false}
+                      >
+                        {getButtonText(plan.productId)}
+                      </CheckoutLink>
+                    ) : (
+                      getButtonText(plan.productId)
+                    )
+                  ) : (
+                    plan.cta
+                  )
+                }
+              />
+            ))}
           </div>
         </div>
-      </Authenticated>
+      </div>
     </>
   );
 };

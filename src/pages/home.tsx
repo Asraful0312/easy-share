@@ -6,21 +6,14 @@ import { api } from "../../convex/_generated/api";
 import { CreatePin } from "@/CreatePin";
 import { AccessPin } from "@/AccessPin";
 import UserPins from "@/UserPins";
+import SigninPage from "./signin-page";
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 text-gray-800">
       <main className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 space-y-8">
         <Unauthenticated>
-          <div className="w-full max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl text-center">
-            <h1 className="text-4xl font-bold text-primary mb-4">
-              Welcome to PinDrop!
-            </h1>
-            <p className="text-lg text-gray-600 mb-8">
-              Sign in to create and access your pins securely.
-            </p>
-            <SignInForm />
-          </div>
+          <SigninPage />
         </Unauthenticated>
         <Authenticated>
           <Content />

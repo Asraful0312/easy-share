@@ -1,13 +1,29 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 "use client";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import SignInWithGoogle from "./SignInWithGoogle";
+import { useNavigate } from "react-router-dom";
 
 export function SignInForm() {
   const { signIn } = useAuthActions();
   const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAnonymousAuth = async () => {
+    setSubmitting(true);
+    try {
+      await signIn("anonymous");
+      await navigate("/");
+      setSubmitting(false);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to login anonymously");
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -30,6 +46,7 @@ export function SignInForm() {
             }
             toast.error(toastTitle);
             setSubmitting(false);
+            void navigate("/");
           });
         }}
       >
@@ -71,7 +88,7 @@ export function SignInForm() {
         <hr className="my-4 grow border-gray-200" />
       </div>
       <SignInWithGoogle />
-      <button className="auth-button" onClick={() => void signIn("anonymous")}>
+      <button className="auth-button" onClick={handleAnonymousAuth}>
         Sign in anonymously
       </button>
     </div>
