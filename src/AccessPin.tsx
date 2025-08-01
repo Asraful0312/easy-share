@@ -63,8 +63,6 @@ export function AccessPin() {
       }
     } catch (err) {
       console.error("Failed to read clipboard:", err);
-      // Optionally, you can show a toast message for clipboard access errors
-      // toast.error("Failed to access clipboard.");
     }
   };
 
@@ -103,7 +101,7 @@ export function AccessPin() {
         setIsCopied(true);
         setCopiedText(text);
       },
-      () => toast.error("Failed to copy text.")
+      () => console.error("Failed to copy text.")
     );
   };
 

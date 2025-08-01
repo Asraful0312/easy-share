@@ -245,8 +245,6 @@ export function CreatePin() {
     setTextContent(clipboardText);
   };
 
-  // Format bytes to human-readable string
-
   return (
     <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold text-primary mb-6 text-center">

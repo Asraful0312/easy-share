@@ -32,7 +32,7 @@ export function useCreatePin() {
   // Define plan limits for client-side validation
   const planLimits = {
     free: {
-      maxFileSize: 50 * 1024 * 1024, // 50MB
+      maxFileSize: 100 * 1024 * 1024, // 50MB
       allowedTypes: ["text", "image", "code", "url", "mixed", "file"],
     },
     pro: {

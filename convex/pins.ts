@@ -84,7 +84,7 @@ export const createPin = mutation({
     // Define plan limits
     const planLimits = {
       free: {
-        maxFileSize: 50 * 1024 * 1024, // 50MB
+        maxFileSize: 100 * 1024 * 1024, // 100MB
         maxDailyUpload: 100 * 1024 * 1024, // 100MB
         allowedTypes: ["text", "image", "code", "url", "mixed", "file"],
         maxStorageDays: 1,
